@@ -55,6 +55,10 @@ async def analyze_audio(request: AnalyzeRequest):
         features = analyzer.analyze(str(file_path))
 
         # 构建响应
+        import numpy as np
+        energy_array = np.array(features.energy)
+        spectral_array = np.array(features.spectral_centroid)
+        
         return JSONResponse(
             status_code=200,
             content={
@@ -68,14 +72,14 @@ async def analyze_audio(request: AnalyzeRequest):
                     "beats": features.beats[:100],  # 限制返回数量
                     "emotion_scores": features.emotion_scores,
                     "energy_stats": {
-                        "mean": float(features.energy.mean()),
-                        "max": float(features.energy.max()),
-                        "min": float(features.energy.min())
+                        "mean": float(energy_array.mean()),
+                        "max": float(energy_array.max()),
+                        "min": float(energy_array.min())
                     },
                     "spectral_stats": {
-                        "mean": float(features.spectral_centroid.mean()),
-                        "max": float(features.spectral_centroid.max()),
-                        "min": float(features.spectral_centroid.min())
+                        "mean": float(spectral_array.mean()),
+                        "max": float(spectral_array.max()),
+                        "min": float(spectral_array.min())
                     }
                 }
             }
