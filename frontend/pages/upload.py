@@ -93,39 +93,86 @@ def _show_processing_options(uploaded_file):
 
 def _process_file(uploaded_file, model_choice, time_resolution, enable_smoothing):
     """处理文件"""
+    from frontend.utils.api_client import APIClient
+    
     progress_placeholder = st.empty()
     status_placeholder = st.empty()
     
     try:
+        api_client = APIClient()
+        
         # 步骤1: 上传文件
         with progress_placeholder.container():
             st.progress(0.2, text="📤 上传文件中...")
         
-        time.sleep(1)  # 模拟处理
+        upload_result = api_client.upload_file(uploaded_file)
+        if not upload_result.get('success'):
+            raise Exception(upload_result.get('message', '上传失败'))
+        
+        file_id = upload_result['data']['file_id']
+        st.session_state['last_file_id'] = file_id
         
         # 步骤2: 分析音频
         with progress_placeholder.container():
             st.progress(0.4, text="🎵 分析音频特征...")
         
-        time.sleep(2)  # 模拟处理
+        analyze_result = api_client.analyze_audio(file_id)
+        if not analyze_result.get('success'):
+            raise Exception(analyze_result.get('message', '分析失败'))
+        
+        st.session_state['last_analysis'] = analyze_result['data']
         
         # 步骤3: 生成表情
         with progress_placeholder.container():
             st.progress(0.7, text="🎭 生成表情动画...")
         
-        time.sleep(2)  # 模拟处理
+        model_mapping = {
+            "默认模型": "default",
+            "Hiyori": "hiyori",
+            "赛博朋克": "cyberpunk"
+        }
+        
+        expression_result = api_client.generate_expression(
+            file_id=file_id,
+            model_name=model_mapping.get(model_choice, "default"),
+            time_resolution=time_resolution,
+            enable_smoothing=enable_smoothing
+        )
+        
+        if not expression_result.get('success'):
+            raise Exception(expression_result.get('message', '生成失败'))
+        
+        st.session_state['last_expression_id'] = expression_result['data']['expression_id']
+        st.session_state['last_expression_data'] = expression_result['data']
         
         # 完成
         with progress_placeholder.container():
             st.progress(1.0, text="✅ 处理完成!")
         
-        st.success("🎉 表情文件生成成功！您可以在预览页面查看效果。")
+        # 显示结果信息
+        st.success("🎉 表情文件生成成功！")
         
-        if st.button("👀 查看预览", type="secondary"):
-            st.switch_page("pages/preview.py")
+        # 显示统计信息
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("音频时长", f"{expression_result['data']['duration']:.2f}秒")
+        with col2:
+            st.metric("关键帧数", expression_result['data']['keyframe_count'])
+        with col3:
+            st.metric("节拍 (BPM)", f"{expression_result['data']['tempo']:.1f}")
+        
+        # 情感分数
+        st.markdown("#### 🎭 检测到的情感")
+        emotion_scores = expression_result['data']['emotion_scores']
+        cols = st.columns(len(emotion_scores))
+        for i, (emotion, score) in enumerate(emotion_scores.items()):
+            with cols[i]:
+                st.metric(emotion.capitalize(), f"{score:.2%}")
     
     except Exception as e:
         status_placeholder.error(f"❌ 处理失败: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
 
 if __name__ == "__main__":
     render()

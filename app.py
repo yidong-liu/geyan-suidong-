@@ -97,11 +97,21 @@ def main():
         
         # API状态
         st.markdown("### 📡 服务状态")
+        
+        api_healthy = check_api_health()
+        
         col1, col2 = st.columns(2)
         with col1:
-            st.metric("后端API", "运行中" if check_api_health() else "离线")
+            if api_healthy:
+                st.success("✅ 后端API")
+            else:
+                st.error("❌ 后端API")
         with col2:
-            st.metric("前端服务", "运行中")
+            st.success("✅ 前端服务")
+        
+        if not api_healthy:
+            st.warning("⚠️ 后端服务未运行，请先启动backend")
+            st.code("./start_backend.sh", language="bash")
         
         st.markdown("---")
         
