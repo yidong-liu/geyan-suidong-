@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv
+.env
+
+# 数据文件
+data/uploads/*
+data/temp/*
+data/cache/*
+data/expressions/*
+!data/.gitkeep
+!data/uploads/.gitkeep
+!data/temp/.gitkeep
+!data/cache/.gitkeep
+!data/expressions/.gitkeep
+
+# 日志
+logs/*.log
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 模型文件 (如果太大)
+models/*.model3
+models/*.moc3
+models/*.bin
+
+# Streamlit
+.streamlit/
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 构建
+build/
+dist/
+*.egg-info/

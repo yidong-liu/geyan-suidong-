@@ -1,0 +1,55 @@
+{
+  "version": "1.0.0",
+  "mapping": {
+    "eye_open": {
+      "parameter": "ParamEyeLOpen",
+      "range": [0.0, 1.0],
+      "default": 0.8
+    },
+    "eye_open_r": {
+      "parameter": "ParamEyeROpen",
+      "range": [0.0, 1.0],
+      "default": 0.8
+    },
+    "eyebrow_height": {
+      "parameter": "ParamEyeBrowLY",
+      "range": [0.0, 1.0],
+      "default": 0.5
+    },
+    "eyebrow_height_r": {
+      "parameter": "ParamEyeBrowRY",
+      "range": [0.0, 1.0],
+      "default": 0.5
+    },
+    "mouth_open": {
+      "parameter": "ParamMouthOpenY",
+      "range": [0.0, 1.0],
+      "default": 0.2
+    },
+    "mouth_form": {
+      "parameter": "ParamMouthForm",
+      "range": [0.0, 1.0],
+      "default": 0.3
+    },
+    "cheek": {
+      "parameter": "ParamCheek",
+      "range": [0.0, 1.0],
+      "default": 0.0
+    },
+    "body_angle_x": {
+      "parameter": "ParamBodyAngleX",
+      "range": [-1.0, 1.0],
+      "default": 0.0
+    },
+    "body_angle_y": {
+      "parameter": "ParamBodyAngleY",
+      "range": [-1.0, 1.0],
+      "default": 0.0
+    },
+    "breath": {
+      "parameter": "ParamBreath",
+      "range": [0.0, 1.0],
+      "default": 0.5
+    }
+  }
+}
