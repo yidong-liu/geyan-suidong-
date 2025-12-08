@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "三月七live2d模型",
+  "$schema": "https://json.schemastore.org/chrome-manifest.json",
+  "version": "0.1.0",
+  "description": "为你的浏览器增加一个三月七的live2d模型",
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "js/model/march_7/expressions/1.exp3.json",
+        "js/model/march_7/expressions/2.exp3.json",
+        "js/model/march_7/expressions/3.exp3.json",
+        "js/model/march_7/expressions/4.exp3.json",
+        "js/model/march_7/expressions/6",
+        "js/model/march_7/motions/items_pinned_to_model.json",
+        "js/model/march_7/textures/texture_00.png",
+        "js/model/march_7/march_7.moc3",
+        "js/model/march_7/march_7.model3.json",
+        "js/model/march_7/march_7.physics3.json"
+      ],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "js/live2d/content.js",
+        "js/live2d/jquery.min.js",
+        "js/live2d/bootstrap.min.js",
+        "js/live2d/live2dcubismcore.min.js",
+        "js/live2d/pixi.min.js",
+        "js/live2d/live2dcubismframework.js",
+        "js/live2d/live2dcubismpixi.js",
+        "js/live2d/l2d.js",
+        "js/live2d/utils.js",
+        "js/live2d/tools.js",
+        "js/live2d/message.js",
+        "js/live2d/main.js"
+      ],
+      "css": ["css/sanyue.css"]
+    }
+  ]
+}
