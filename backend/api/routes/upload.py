@@ -98,12 +98,58 @@ async def delete_file(file_id: str):
             content={
                 "success": True,
                 "message": "文件删除成功",
-                "data": {"file_id": file_id}
+                "data": {
+                    "file_id": file_id
+                }
             }
         )
 
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"文件删除失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"文件删除失败: {str(e)}")
+
+@router.get("/upload/{file_id}")
+async def get_file_info(file_id: str):
+    """
+    获取文件信息
+
+    Args:
+        file_id: 文件ID
+
+    Returns:
+        dict: 文件信息
+    """
+    try:
+        # 查找文件
+        file_path = None
+        for path in UPLOAD_DIR.glob(f"{file_id}.*"):
+            file_path = path
+            break
+
+        if not file_path or not file_path.exists():
+            raise HTTPException(status_code=404, detail="文件不存在")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "文件信息获取成功",
+                "data": {
+                    "file_id": file_id,
+                    "filename": file_path.name,
+                    "file_path": str(file_path),
+                    "file_size": file_path.stat().st_size,
+                    "file_type": file_path.suffix.lower()
+                }
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取文件信息失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取文件信息失败: {str(e)}")
         logger.error(f"文件删除失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"文件删除失败: {str(e)}")
