@@ -186,7 +186,9 @@ export class LAppLive2DManager {
     const modelPath: string = LAppDefine.ResourcesPath + model + '/';
     let modelJsonName: string = LAppDefine.ModelDir[index];
     modelJsonName += '.model3.json';
-
+    if (LAppDefine.DebugLogEnable) {
+      LAppPal.printMessage(`[APP]model Path: ${modelPath}`);
+    }
     this.releaseAllModel();
     this._models.pushBack(new LAppModel());
     this._models.at(0).loadAssets(modelPath, modelJsonName);

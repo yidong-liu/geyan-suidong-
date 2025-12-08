@@ -1,3 +1,4 @@
+
 import { LAppLive2DManager } from "./lapplive2dmanager";
 export class ExpressionManager
 {
@@ -10,7 +11,7 @@ export class ExpressionManager
     public getlist()
     {
         // const fileUrl = chrome.runtime.getURL("js/model/march_7/march_7.model3.json");
-        const fileUrl = "/model/march_7/march_7.model3.json"
+        const fileUrl = "./model/march_7/march_7.model3.json"
         fetch(fileUrl)
             .then(response =>
             {

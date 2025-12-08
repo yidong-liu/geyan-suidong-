@@ -101,12 +101,12 @@ export class LAppModel extends CubismUserModel {
       });
   }
 
-/**
-*model3.json生成模型。
-*根据model3.json的描述进行模型生成、运动、物理运算等组件生成。
-*
-*@param setting ICubismModelSetting实例
-*/
+  /**
+  *model3.json生成模型。
+  *根据model3.json的描述进行模型生成、运动、物理运算等组件生成。
+  *
+  *@param setting ICubismModelSetting实例
+  */
   private setupModel(setting: ICubismModelSetting): void {
     this._updating = true;
     this._initialized = false;
@@ -177,7 +177,6 @@ export class LAppModel extends CubismUserModel {
               this._expressions.setValue(expressionName, motion);
 
               this._expressionCount++;
-
               if (this._expressionCount >= count) {
                 this._state = LoadStep.LoadPhysics;
                 // callback
@@ -580,14 +579,14 @@ export class LAppModel extends CubismUserModel {
     this._model.update();
   }
 
-    /**
-    *开始播放由参数指定的运动
-    *@param group运动组名称
-    *@paramno组中的编号
-    *@param priority优先级
-    *@param onFinishedMotionHandler运动播放结束时调用的回调函数
-    *@return返回已启动运动的标识号。在isFinished（）的参数中使用，isFinished（）判断单独的运动是否结束。无法启动时[-1]
-    */
+  /**
+  *开始播放由参数指定的运动
+  *@param group运动组名称
+  *@paramno组中的编号
+  *@param priority优先级
+  *@param onFinishedMotionHandler运动播放结束时调用的回调函数
+  *@return返回已启动运动的标识号。在isFinished（）的参数中使用，isFinished（）判断单独的运动是否结束。无法启动时[-1]
+  */
   public startMotion(
     group: string,
     no: number,
@@ -673,13 +672,13 @@ export class LAppModel extends CubismUserModel {
     );
   }
 
-    /**
-    *开始播放随机选择的运动。
-    *@param group运动组名称
-    *@param priority优先级
-    *@param onFinishedMotionHandler运动播放结束时调用的回调函数
-    *@return返回已启动运动的标识号。在isFinished（）的参数中使用，isFinished（）判断单独的运动是否结束。无法启动时[-1]
-    */
+  /**
+  *开始播放随机选择的运动。
+  *@param group运动组名称
+  *@param priority优先级
+  *@param onFinishedMotionHandler运动播放结束时调用的回调函数
+  *@return返回已启动运动的标识号。在isFinished（）的参数中使用，isFinished（）判断单独的运动是否结束。无法启动时[-1]
+  */
   public startRandomMotion(
     group: string,
     priority: number,
@@ -696,33 +695,33 @@ export class LAppModel extends CubismUserModel {
     return this.startMotion(group, no, priority, onFinishedMotionHandler);
   }
 
-    /**
-    *设置参数指定的表情运动
-    *
-    *@param expressionId表情运动ID
-    */
-  public setExpression(expressionId: string):void {
+  /**
+  *设置参数指定的表情运动
+  *
+  *@param expressionId表情运动ID
+  */
+  public setExpression(expressionId: string): void {
     const motion: ACubismMotion = this._expressions.getValue(expressionId);
     if (this._debugMode) {
       LAppPal.printMessage(`[APP]expression: [${expressionId}]`);
     }
     if (motion != null) {
-            this._expressionManager.startMotionPriority(
-            motion,
-            false,
-            LAppDefine.PriorityForce,
-        );
+      this._expressionManager.startMotionPriority(
+        motion,
+        false,
+        LAppDefine.PriorityForce,
+      );
     } else {
       if (this._debugMode) {
         LAppPal.printMessage(`[APP]expression[${expressionId}] is null`);
       }
     }
-    
+
   }
 
-/**
-*设置随机选择的表情动作
-*/
+  /**
+  *设置随机选择的表情动作
+  */
   public setRandomExpression(): void {
     if (this._expressions.getSize() == 0) {
       return;
@@ -863,10 +862,10 @@ export class LAppModel extends CubismUserModel {
   public stopExpression(): void {
     // 定义数据
     const data = {
-        "Type": "Live2D Expression",
-        "FadeInTime": 1,
-        "FadeOutTime": 1,
-        "Parameters": [] as string[]
+      "Type": "Live2D Expression",
+      "FadeInTime": 1,
+      "FadeOutTime": 1,
+      "Parameters": [] as string[]
     };
     const jsonString = JSON.stringify(data);
     const encoder = new TextEncoder();
@@ -874,11 +873,11 @@ export class LAppModel extends CubismUserModel {
     const arrayBuffer = uint8Array.buffer;
     const expressionName = "stop"
     const motion: ACubismMotion = this.loadExpression(
-        arrayBuffer,
-        arrayBuffer.byteLength,
-        expressionName
-      );
-      this._expressionManager.endMotion(motion,false)
+      arrayBuffer,
+      arrayBuffer.byteLength,
+      expressionName
+    );
+    this._expressionManager.endMotion(motion, false)
     // this._expressionManager.stopAllMotions();
   }
   /**
@@ -991,7 +990,7 @@ export class LAppModel extends CubismUserModel {
     this._allMotionCount = 0;
     this._wavFileHandler = new LAppWavFileHandler();
     this._consistency = false;
-    
+
   }
 
   _modelSetting: ICubismModelSetting; // モデルセッティング情報

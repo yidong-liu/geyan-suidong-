@@ -1,0 +1,49 @@
+{
+    "Version": 3,
+    "ScaleFactor": 0.1,
+    "FileReferences": {
+        "Groups": [
+            {
+                "Target": "Parameter",
+                "Name": "LipSync",
+                "Ids": []
+            },
+            {
+                "Target": "Parameter",
+                "Name": "EyeBlink",
+                "Ids": [
+                    "ParamEyeLOpen",
+                    "ParamEyeROpen"
+                ]
+            }
+        ],
+        "Moc": "march_7.moc3",
+        "Expressions": [
+            {
+                "Name": "生气",
+                "File": "expressions/1.exp3.json"
+            },
+            {
+                "Name": "星星眼",
+                "File": "expressions/2.exp3.json"
+            },
+            {
+                "Name": "睡觉",
+                "File": "expressions/3.exp3.json"
+            },
+            {
+                "Name": "流汗",
+                "File": "expressions/4.exp3.json"
+            },
+            {
+                "Name": "冒烟",
+                "File": "expressions/6.exp3.json"
+            }
+        ],
+        "Textures": [
+            "textures/texture_00.png"
+        ],
+        "Physics": "march_7.physics3.json",
+        "HitAreas": []
+    }
+}

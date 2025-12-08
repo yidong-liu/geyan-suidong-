@@ -1,0 +1,17 @@
+{
+    "Type": "Live2D Expression",
+    "FadeInTime": 2,
+	"FadeOutTime": 2,
+    "Parameters": [
+        {
+            "Id": "ParamAngry",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "ParamAngry2",
+            "Value": 1.0,
+            "Blend": "Add"
+        }
+    ]
+}

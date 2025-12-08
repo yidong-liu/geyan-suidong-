@@ -383,7 +383,7 @@ export class CubismUserModel {
     this._accelerationY = 0.0;
     this._accelerationZ = 0.0;
     this._mocConsistency = false;
-    this._debugMode = false;
+    this._debugMode = true;
     this._renderer = null;
 
     // モーションマネージャーを作成
