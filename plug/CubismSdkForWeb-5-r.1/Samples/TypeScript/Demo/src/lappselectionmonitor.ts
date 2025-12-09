@@ -127,7 +127,7 @@ export class SelectionMonitor {
     if (event.ctrlKey && event.key === "0") {
       // 获取一个表情数组 localhost: 8000
       axios
-        .post("http://localhost:8000/api/v1/getNeutralExpression", {})
+        .get("http://localhost:8000/api/v1/getNeutralExpression", {})
         .then((response: AxiosResponse) => {
           const neutralExpression = response.data.neutralExpression;
           this._expressionManager.setExpressions(neutralExpression);
