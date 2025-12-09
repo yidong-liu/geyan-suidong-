@@ -124,7 +124,7 @@ export class SelectionMonitor {
         this._expressionManager.setExpression(expression);
       }
     });
-    if (event.ctrlKey && event.key === "w") {
+    if (event.ctrlKey  && event.shiftKey && event.key === "w") {
       // 获取一个表情数组 localhost: 8000
       axios
         .post("http://localhost:8000/api/v1/getNeutralExpression", {})
