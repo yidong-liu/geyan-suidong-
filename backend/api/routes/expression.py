@@ -13,6 +13,7 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
 from backend.core.expression_generator import ExpressionGenerator
+from backend.core.live2d_expression_mapper import Live2DExpressionMapper
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,9 @@ router = APIRouter()
 UPLOAD_DIR = Path("data/uploads")
 EXPRESSION_DIR = Path("data/expressions")
 EXPRESSION_DIR.mkdir(parents=True, exist_ok=True)
+
+# 缓存最后生成的表情序列
+_last_live2d_sequence = None
 
 class GenerateRequest(BaseModel):
     file_id: str
@@ -70,6 +74,23 @@ async def generate_expression(request: GenerateRequest):
 
         logger.info(f"表情生成完成: {expression_id}")
 
+        # 使用Live2D表情映射器生成表情序列
+        try:
+            mapper = Live2DExpressionMapper()
+            live2d_sequence = mapper.map_emotions_to_expressions(
+                emotion_scores=expression_data["emotion_scores"],
+                duration=expression_data["duration"]
+            )
+            logger.info(f"Live2D表情序列生成完成: {live2d_sequence}")
+            
+            # 缓存表情序列
+            global _last_live2d_sequence
+            _last_live2d_sequence = live2d_sequence
+        except Exception as e:
+            logger.error(f"Live2D表情映射失败: {e}")
+            live2d_sequence = ["0"]
+            _last_live2d_sequence = live2d_sequence
+
         return JSONResponse(
             status_code=200,
             content={
@@ -83,7 +104,8 @@ async def generate_expression(request: GenerateRequest):
                     "duration": expression_data["duration"],
                     "tempo": expression_data["tempo"],
                     "keyframe_count": len(expression_data["expressions"]),
-                    "emotion_scores": expression_data["emotion_scores"]
+                    "emotion_scores": expression_data["emotion_scores"],
+                    "live2d_sequence": live2d_sequence
                 }
             }
         )
@@ -91,8 +113,23 @@ async def generate_expression(request: GenerateRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"表情生成失败: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"表情生成失败: {str(e)}")
+        error_msg = str(e)
+        logger.error(f"表情生成失败: {error_msg}", exc_info=True)
+        
+        # 返回详细的错误信息给前端
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": "表情生成失败",
+                "error": error_msg,
+                "error_type": type(e).__name__,
+                "details": {
+                    "file_id": request.file_id,
+                    "error_location": "expression_generator"
+                }
+            }
+        )
 
 @router.get("/expression/{expression_id}")
 async def get_expression(expression_id: str):
@@ -129,3 +166,62 @@ async def get_expression(expression_id: str):
     except Exception as e:
         logger.error(f"获取表情数据失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取表情数据失败: {str(e)}")
+
+
+@router.get("/live2d/expressions")
+async def get_live2d_expressions():
+    """
+    获取Live2D表情配置信息
+
+    Returns:
+        dict: Live2D表情配置
+    """
+    try:
+        mapper = Live2DExpressionMapper()
+        config = mapper.get_expression_info()
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Live2D表情配置获取成功",
+                "data": config
+            }
+        )
+    except Exception as e:
+        logger.error(f"获取Live2D表情配置失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取Live2D表情配置失败: {str(e)}")
+
+
+@router.get("/getNeutralExpression")
+async def get_neutral_expression():
+    """
+    获取上次生成的Live2D表情序列
+
+    Returns:
+        dict: 包含live2d_sequence的响应
+    """
+    global _last_live2d_sequence
+    
+    if _last_live2d_sequence is None:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "暂无表情序列",
+                "data": {
+                    "live2d_sequence": []
+                }
+            }
+        )
+    
+    return JSONResponse(
+        status_code=200,
+        content={
+            "success": True,
+            "message": "获取表情序列成功",
+            "data": {
+                "live2d_sequence": _last_live2d_sequence
+            }
+        }
+    )

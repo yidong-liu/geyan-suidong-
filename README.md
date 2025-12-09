@@ -50,38 +50,61 @@ cd geyan-suidong-
 pip install -r requirements.txt
 
 # 3. 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件，添加必要的API密钥
+# 创建 .env 文件并添加 API 密钥
+echo "GOOGLE_API_KEY=your_api_key_here" > .env
+echo "GOOGLE_MODEL=gemini-2.0-flash-exp" >> .env
 
 # 4. 启动应用
-streamlit run app.py
+# 方式1：启动所有服务（推荐）
+./start_all.sh
+
+# 方式2：分别启动
+./start_backend.sh   # 后端API (端口8000)
+./start_frontend.sh  # 前端界面 (端口8501)
 ```
+
+**访问地址：**
+- 前端界面: http://localhost:8501
+- 后端API: http://localhost:8000
+- API文档: http://localhost:8000/docs
 
 ## 📁 项目结构
 
+详细结构请查看 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
+
 ```
 geyan-suidong-/
-├── backend/                    # 后端服务
-│   ├── core/                  # 核心模块
-│   │   ├── audio_analyzer.py  # 音频分析
-│   │   ├── expression_generator.py # 表情生成
-│   │   └── langchain_agent.py # LangChain代理
+├── backend/                    # 后端服务 (FastAPI)
 │   ├── api/                   # API接口
-│   │   └── main.py           # FastAPI主应用
-│   └── utils/                 # 工具函数
-├── frontend/                  # 前端页面
-│   ├── pages/                # Streamlit页面
-│   │   ├── upload.py        # 上传页面
-│   │   └── preview.py       # 预览页面
-│   ├── components/           # 组件
-│   └── static/              # 静态资源
-├── models/                   # Live2D模型
-├── data/                    # 数据文件
-├── docs/                    # 文档
-├── tests/                   # 测试
-├── requirements.txt         # Python依赖
-├── app.py                  # Streamlit主应用
-└── .env.example            # 环境变量模板
+│   │   ├── main.py           # FastAPI主应用
+│   │   └── routes/           # 路由模块
+│   ├── core/                 # 核心业务逻辑
+│   │   ├── audio_analyzer.py      # 音频分析（AI驱动）
+│   │   ├── expression_generator.py # 表情生成
+│   │   ├── langchain_agent.py     # LangChain代理
+│   │   └── live2d_controller.py   # Live2D控制
+│   ├── models/               # 数据模型
+│   └── utils/                # 工具函数
+├── frontend/                 # 前端 (Streamlit)
+│   ├── pages/               # 页面
+│   │   ├── upload.py       # 上传页面
+│   │   ├── realtime.py     # 实时分析
+│   │   └── settings.py     # 设置页面
+│   ├── components/          # UI组件
+│   └── utils/              # 工具函数
+├── config/                  # 配置文件
+├── data/                   # 数据目录
+│   ├── uploads/           # 上传的音频
+│   ├── results/           # 分析结果
+│   └── expressions/       # 表情数据
+├── tests/                  # 测试文件
+├── archive/               # 归档文件
+├── start_all.sh          # 启动所有服务
+├── start_backend.sh      # 启动后端
+├── start_frontend.sh     # 启动前端
+├── stop_all.sh          # 停止所有服务
+├── app.py              # Streamlit主应用
+└── requirements.txt    # Python依赖
 ```
 
 ## 🎯 开发路线图
@@ -96,11 +119,9 @@ geyan-suidong-/
 
 ## 📚 文档
 
-- [开发环境配置](docs/development.md)
-- [后端开发指南](docs/backend_guide.md)
-- [前端开发指南](docs/frontend_guide.md)
-- [API 文档](docs/api.md)
-- [部署指南](docs/deployment.md)
+- [项目结构说明](PROJECT_STRUCTURE.md) - 详细的项目结构和文件说明
+- [清理总结](CLEANUP_SUMMARY.md) - 后端修复和项目清理记录
+- [文档索引](DOC_INDEX.md) - 所有文档的索引
 
 ## 🤝 贡献指南
 

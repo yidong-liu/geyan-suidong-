@@ -11,7 +11,8 @@ import sys
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
-from backend.core.audio_analyzer import AudioAnalyzer
+from backend.core.audio_analyzer import AudioAnalyzerAgent
+from backend.core.ai_config import AIConfig
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +48,11 @@ async def analyze_audio(request: AnalyzeRequest):
             raise HTTPException(status_code=404, detail="文件不存在")
 
         # 执行分析
-        analyzer = AudioAnalyzer(
+        ai_config = AIConfig.get_analyzer_config()
+        analyzer = AudioAnalyzerAgent(
             sample_rate=request.sample_rate,
-            hop_length=request.hop_length
+            hop_length=request.hop_length,
+            **ai_config
         )
 
         features = analyzer.analyze(str(file_path))
@@ -88,5 +91,20 @@ async def analyze_audio(request: AnalyzeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"音频分析失败: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"音频分析失败: {str(e)}")
+        error_msg = str(e)
+        logger.error(f"音频分析失败: {error_msg}", exc_info=True)
+        
+        # 返回详细的错误信息给前端
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": "音频分析失败",
+                "error": error_msg,
+                "error_type": type(e).__name__,
+                "details": {
+                    "file_id": request.file_id,
+                    "error_location": "audio_analyzer"
+                }
+            }
+        )

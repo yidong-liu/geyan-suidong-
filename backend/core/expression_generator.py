@@ -1,23 +1,27 @@
 """
 表情生成器模块
-整合音频分析和AI生成，创建完整的表情动画
+整合音频分析和AI生成，创建完整的表情动画 - 完全AI驱动
 """
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import json
 import logging
 from pathlib import Path
-from .audio_analyzer import AudioAnalyzer, AudioFeatures
-from .langchain_agent import ExpressionAgent
+from .audio_analyzer import AudioAnalyzerAgent, AudioFeatures
+from .langchain_agent import ExpressionAgentV2
 
 logger = logging.getLogger(__name__)
 
+
 class ExpressionGenerator:
-    """表情生成器"""
+    """表情生成器 - 完全AI驱动"""
 
     def __init__(
         self,
-        audio_analyzer: AudioAnalyzer = None,
-        expression_agent: ExpressionAgent = None
+        audio_analyzer: Optional[AudioAnalyzerAgent] = None,
+        expression_agent: Optional[ExpressionAgentV2] = None,
+        api_key: Optional[str] = None,
+        model_name: str = "gpt-4.1",
+        use_gemini: bool = False
     ):
         """
         初始化表情生成器
@@ -25,9 +29,20 @@ class ExpressionGenerator:
         Args:
             audio_analyzer: 音频分析器实例
             expression_agent: 表情代理实例
+            api_key: API密钥
+            model_name: 模型名称
+            use_gemini: 是否使用Gemini
         """
-        self.audio_analyzer = audio_analyzer or AudioAnalyzer()
-        self.expression_agent = expression_agent or ExpressionAgent()
+        self.audio_analyzer = audio_analyzer or AudioAnalyzerAgent(
+            api_key=api_key,
+            model_name=model_name,
+            use_gemini=use_gemini
+        )
+        self.expression_agent = expression_agent or ExpressionAgentV2(
+            api_key=api_key,
+            model_name=model_name,
+            use_gemini=use_gemini
+        )
 
     def generate_from_audio(
         self,

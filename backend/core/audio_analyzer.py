@@ -1,14 +1,36 @@
 """
 音频分析器模块
-使用librosa进行音频特征提取
+使用librosa进行音频特征提取，使用LangChain AI进行情感分析
 """
 import librosa
 import numpy as np
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 import logging
+import os
+from dotenv import load_dotenv
 
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate
+)
+from langchain_core.output_parsers import JsonOutputParser
+from pydantic import BaseModel, Field
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+load_dotenv()
 logger = logging.getLogger(__name__)
+
+class EmotionScores(BaseModel):
+    """情感分数模型"""
+    happy: float = Field(description="快乐程度 (0-1)", ge=0.0, le=1.0)
+    sad: float = Field(description="悲伤程度 (0-1)", ge=0.0, le=1.0)
+    energetic: float = Field(description="活力程度 (0-1)", ge=0.0, le=1.0)
+    calm: float = Field(description="平静程度 (0-1)", ge=0.0, le=1.0)
+    angry: float = Field(description="愤怒程度 (0-1)", ge=0.0, le=1.0)
+
 
 @dataclass
 class AudioFeatures:
@@ -23,13 +45,126 @@ class AudioFeatures:
     emotion_scores: Dict[str, float]
     timestamps: List[float]
 
-class AudioAnalyzer:
-    """音频分析器"""
 
-    def __init__(self, sample_rate: int = 44100, hop_length: int = 512):
+class AudioAnalyzerAgent:
+    """基于LangChain的音频分析代理 - 完全AI驱动"""
+
+    def __init__(
+        self,
+        sample_rate: int = 44100,
+        hop_length: int = 512,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model_name: str = "gpt-4.1",
+        temperature: float = 0.3,
+        max_tokens: int = 500,
+        use_gemini: bool = False
+    ):
+        """
+        初始化音频分析代理
+
+        Args:
+            sample_rate: 采样率
+            hop_length: 跳跃长度
+            api_key: API密钥
+            base_url: API基础URL (仅OpenAI)
+            model_name: 模型名称
+            temperature: 温度参数
+            max_tokens: 最大token数
+            use_gemini: 是否使用Gemini（默认True）
+        """
         self.sample_rate = sample_rate
         self.hop_length = hop_length
         self.frame_length = 2048
+        
+        # AI配置
+        self.use_gemini = use_gemini
+        if self.use_gemini:
+            self.api_key = api_key or os.getenv('GOOGLE_API_KEY')
+            self.model_name = model_name or os.getenv('GOOGLE_MODEL', 'gemini-1.5-flash')
+            self.base_url = None
+        else:
+            self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+            self.base_url = base_url or os.getenv('OPENAI_API_BASE')
+            self.model_name = model_name
+            
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        
+        if not self.api_key:
+            raise ValueError("未找到 API 密钥，请设置 GOOGLE_API_KEY 或 OPENAI_API_KEY 环境变量")
+        
+        # 初始化LLM
+        self._setup_llm()
+        self._setup_emotion_chain()
+
+    def _setup_llm(self):
+        """初始化LLM"""
+        try:
+            if self.use_gemini:
+                llm_kwargs = {
+                    "model": self.model_name,
+                    "temperature": self.temperature,
+                    "max_output_tokens": self.max_tokens,
+                    "google_api_key": self.api_key,
+                }
+                self.llm = ChatGoogleGenerativeAI(**llm_kwargs)
+                logger.info(f"Google Gemini LLM 初始化成功: {self.model_name}")
+            else:
+                llm_kwargs = {
+                    "model": self.model_name,
+                    "temperature": self.temperature,
+                    "max_tokens": self.max_tokens,
+                    "api_key": self.api_key,
+                }
+                if self.base_url:
+                    llm_kwargs["base_url"] = self.base_url
+                    logger.info(f"使用自定义 base_url: {self.base_url}")
+                self.llm = ChatOpenAI(**llm_kwargs)
+                logger.info(f"OpenAI LLM 初始化成功: {self.model_name}")
+        except Exception as e:
+            logger.error(f"LLM 初始化失败: {e}")
+            raise
+
+    def _setup_emotion_chain(self):
+        """设置情感分析链"""
+        system_template = """你是一个专业的音频情感分析专家。
+你需要根据音频的特征参数（节奏、能量、频谱、零交叉率等）来判断音乐的情感分布。
+
+分析维度：
+- happy: 快乐、欢快的程度
+- sad: 悲伤、忧郁的程度
+- energetic: 活力、激昂的程度
+- calm: 平静、舒缓的程度
+- angry: 愤怒、激烈的程度
+
+音频特征解释：
+- tempo (BPM): 节拍速度，快节奏通常更energetic/happy，慢节奏更calm/sad
+- energy: 能量强度，高能量通常更energetic/angry，低能量更calm/sad
+- spectral_centroid: 频谱质心，高值表示明亮音色(happy/energetic)，低值表示暗沉音色(sad/calm)
+- zero_crossing_rate: 零交叉率，高值表示噪音或打击乐(energetic/angry)，低值表示纯音(calm)
+
+输出要求：
+1. 所有情感分数必须在 0-1 之间
+2. 所有分数之和应该接近 1.0（允许0.9-1.1范围）
+3. 必须返回严格的JSON格式
+4. 根据特征给出合理的情感分布"""
+
+        human_template = """请分析以下音频特征的情感分布：
+
+节奏(BPM): {tempo}
+能量强度: {energy}
+频谱质心: {spectral_centroid}
+零交叉率: {zero_crossing_rate}
+
+请返回JSON格式的情感分数："""
+
+        self.emotion_prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(system_template),
+            HumanMessagePromptTemplate.from_template(human_template)
+        ])
+        
+        self.emotion_parser = JsonOutputParser(pydantic_object=EmotionScores)
 
     def analyze(self, audio_path: str) -> AudioFeatures:
         """
@@ -133,51 +268,57 @@ class AudioAnalyzer:
 
     def _analyze_emotion(self, y: np.ndarray, sr: int) -> Dict[str, float]:
         """
-        简单的情感分析
-        基于音频特征推断情感状态
+        AI驱动的情感分析
+        使用 LangChain + Gemini/OpenAI 进行情感判断
         """
         # 提取特征用于情感分析
-        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-        energy = np.mean(librosa.feature.rms(y=y, hop_length=self.hop_length))
-        spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))
-        zero_crossing_rate = np.mean(librosa.feature.zero_crossing_rate(y))
+        tempo_raw, _ = librosa.beat.beat_track(y=y, sr=sr)
+        tempo = float(tempo_raw) if isinstance(tempo_raw, (int, float)) else float(tempo_raw.item())
+        energy = float(np.mean(librosa.feature.rms(y=y, hop_length=self.hop_length)))
+        spectral_centroid = float(np.mean(librosa.feature.spectral_centroid(y=y, sr=sr)))
+        zero_crossing_rate = float(np.mean(librosa.feature.zero_crossing_rate(y)))
 
-        # 简单的规则基础情感分析
-        emotion_scores = {
-            'happy': 0.0,
-            'sad': 0.0,
-            'energetic': 0.0,
-            'calm': 0.0,
-            'angry': 0.0
-        }
+        logger.info(f"情感分析输入 - BPM:{tempo:.1f}, 能量:{energy:.3f}, 质心:{spectral_centroid:.1f}, ZCR:{zero_crossing_rate:.3f}")
 
-        # 基于节拍判断
-        if tempo > 120:
-            emotion_scores['happy'] += 0.3
-            emotion_scores['energetic'] += 0.4
-        elif tempo < 80:
-            emotion_scores['sad'] += 0.3
-            emotion_scores['calm'] += 0.4
+        try:
+            # 准备输入数据
+            input_data = {
+                "tempo": f"{tempo:.2f}",
+                "energy": f"{energy:.4f}",
+                "spectral_centroid": f"{spectral_centroid:.2f}",
+                "zero_crossing_rate": f"{zero_crossing_rate:.4f}"
+            }
 
-        # 基于能量判断
-        if energy > 0.1:
-            emotion_scores['energetic'] += 0.3
-            emotion_scores['angry'] += 0.2
+            # 构建链并执行
+            chain = self.emotion_prompt | self.llm | self.emotion_parser
+            result = chain.invoke(input_data)
+            
+            # 验证和归一化
+            emotion_scores = self._validate_emotion_scores(result)
+            
+            logger.info(f"AI情感分析成功: {emotion_scores}")
+            return emotion_scores
+
+        except Exception as e:
+            logger.error(f"AI情感分析失败: {e}")
+            raise RuntimeError(f"情感分析失败: {e}")
+
+    def _validate_emotion_scores(self, scores: Dict[str, Any]) -> Dict[str, float]:
+        """验证并归一化情感分数"""
+        emotion_keys = ['happy', 'sad', 'energetic', 'calm', 'angry']
+        validated = {}
+        
+        # 提取分数
+        for key in emotion_keys:
+            value = scores.get(key, 0.0)
+            validated[key] = max(0.0, min(1.0, float(value)))
+        
+        # 归一化使总和为1
+        total = sum(validated.values())
+        if total > 0:
+            validated = {k: v/total for k, v in validated.items()}
         else:
-            emotion_scores['calm'] += 0.3
-            emotion_scores['sad'] += 0.2
-
-        # 基于频谱质心判断
-        if spectral_centroid > 3000:
-            emotion_scores['happy'] += 0.2
-            emotion_scores['energetic'] += 0.2
-        else:
-            emotion_scores['sad'] += 0.2
-            emotion_scores['calm'] += 0.2
-
-        # 归一化情感分数
-        total_score = sum(emotion_scores.values())
-        if total_score > 0:
-            emotion_scores = {k: v/total_score for k, v in emotion_scores.items()}
-
-        return emotion_scores
+            # 如果全是0，设置为平均分布
+            validated = {k: 0.2 for k in emotion_keys}
+        
+        return validated
