@@ -51,3 +51,5 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+# TypeScript node_modules
+plug/CubismSdkForWeb-5-r.1/Samples/TypeScript/Demo/node_modules
