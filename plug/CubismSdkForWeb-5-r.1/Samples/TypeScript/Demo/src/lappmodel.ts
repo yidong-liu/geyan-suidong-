@@ -721,36 +721,57 @@ export class LAppModel extends CubismUserModel {
    * 设置一组参数指定的表情运动
    * @param expressionIds 表情运动ID数组
    */
-  public async setExpressions(expressionIds: string[]): Promise<void> {
-    for (let i = 0; i < expressionIds.length; i++) {
-      const expressionId = expressionIds[i];
+  private expressionQueue: string[] = [];
+  private isProcessingQueue = false;
+
+  public async setExpressions(expressionIds: any): Promise<void> {
+    // 标准化为数组
+    const ids = Array.isArray(expressionIds) ? expressionIds : [expressionIds];
+    const normalizedIds = ids.map(id => String(id));
+
+    // 添加到队列
+    this.expressionQueue.push(...normalizedIds);
+
+    // 如果已经在处理队列，直接返回
+    if (this.isProcessingQueue) {
+      return;
+    }
+
+    // 开始处理队列
+    this.isProcessingQueue = true;
+    await this.processQueue();
+    this.isProcessingQueue = false;
+  }
+
+  private async processQueue(): Promise<void> {
+    while (this.expressionQueue.length > 0) {
+      const expressionId = this.expressionQueue.shift()!;
+
       const motion: ACubismMotion = this._expressions.getValue(expressionId);
-      if (this._debugMode) {
-        LAppPal.printMessage(`[APP]expression: [${expressionId}]`);
-      }
-      if (motion != null) {
-        const handle = this._expressionManager.startMotionPriority(
+      if (motion) {
+        this._expressionManager.startMotionPriority(
           motion,
-          true,
+          false,
           LAppDefine.PriorityForce
-        );
-        // 等待当前表情播放结束
+        ) as CubismMotionQueueEntryHandle;
         await new Promise<void>((resolve) => {
           const checkFinished = () => {
-            if (this._motionManager.isFinishedByHandle(handle)) {
-              resolve();
+            if (true) {
+              setTimeout(() => {
+                this.stopExpression();
+                setTimeout(() => {
+                  resolve();
+                }, 2000);
+              }, 4000);
             } else {
               requestAnimationFrame(checkFinished);
             }
           };
           checkFinished();
         });
-      } else {
-        if (this._debugMode) {
-          LAppPal.printMessage(`[APP]expression[${expressionId}] is null`);
-        }
       }
     }
+    this.stopExpression();
   }
   /**
    *设置随机选择的表情动作

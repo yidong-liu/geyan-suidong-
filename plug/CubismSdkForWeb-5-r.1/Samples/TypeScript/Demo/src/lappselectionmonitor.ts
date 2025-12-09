@@ -129,7 +129,10 @@ export class SelectionMonitor {
       axios
         .get("http://localhost:8000/api/v1/getNeutralExpression", {})
         .then((response: AxiosResponse) => {
-          const neutralExpression = response.data.live2d_sequence;
+          const neutralExpression = response.data.data.live2d_sequence.map((item: string) => {
+            return expressionlist[Number(item) - 1];
+          });
+
           this._expressionManager.setExpressions(neutralExpression);
         });
     }
