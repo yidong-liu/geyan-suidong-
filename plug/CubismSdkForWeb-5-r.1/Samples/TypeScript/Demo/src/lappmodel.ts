@@ -722,7 +722,8 @@ export class LAppModel extends CubismUserModel {
    * @param expressionIds 表情运动ID数组
    */
   public async setExpressions(expressionIds: string[]): Promise<void> {
-    for (const expressionId of expressionIds) {
+    for (let i = 0; i < expressionIds.length; i++) {
+      const expressionId = expressionIds[i];
       const motion: ACubismMotion = this._expressions.getValue(expressionId);
       if (this._debugMode) {
         LAppPal.printMessage(`[APP]expression: [${expressionId}]`);
