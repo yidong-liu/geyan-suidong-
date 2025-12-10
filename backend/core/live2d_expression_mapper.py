@@ -18,7 +18,7 @@ class Live2DExpressionMapper:
     """Live2D表情映射器"""
     
     # Live2D模型配置路径
-    LIVE2D_MODEL_PATH = Path("/workspaces/geyan-suidong-/plug/Web/三月七live2d模型 v0.1/model/march_7")
+    LIVE2D_MODEL_PATH = Path("./plug/Web/三月七live2d模型 v0.1/model/march_7")
     EXPRESSIONS_DIR = LIVE2D_MODEL_PATH / "expressions"
     MODEL_CONFIG = LIVE2D_MODEL_PATH / "march_7.model3.json"
     
