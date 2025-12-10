@@ -78,3 +78,12 @@ class APIClient:
         except Exception as e:
             logger.error(f"获取表情失败: {str(e)}")
             raise
+    def get_expression_sequence(self) -> Dict[str, Any]:
+        """获取表情序列"""
+        try:
+            response = self.session.get(f"{self.base_url}/getNeutralExpression")
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"获取表情序列失败: {str(e)}")
+            raise

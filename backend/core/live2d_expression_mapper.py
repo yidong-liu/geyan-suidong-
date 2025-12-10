@@ -107,7 +107,6 @@ class Live2DExpressionMapper:
                 expressions_info.append({
                     'index': expr['index'],
                     'name': expr['name'],
-                    'duration': expr['duration'],
                     'description': self._get_emotion_description(expr['name'])
                 })
             
@@ -127,10 +126,11 @@ class Live2DExpressionMapper:
 要求：
 1. 根据情感分析结果选择最匹配的表情序列
 2. 表情切换要自然流畅
-3. 表情持续时间总和应接近音频时长
-4. 每个表情的持续时间为其duration值
+3. 表情持续时间总和应接近音频时长，每个表情持续6s左右,应该有 duration / 6 个表情,列表应有 duration / 6 个元素
+4. 情感分析结果中timestamp每过6s，就需要分割一次内容，生成一个表情，根据parameters的动作变化选择不同的表情，处理完整个情感分析结果，不可以省略
 5. 返回表情索引数组，索引从0开始，可以重复使用同一表情
 6. 数组格式示例：{{"expressions": ["0", "1", "1", "2"]}} 表示依次播放索引0、1、1、2的表情
+7. 检测生成的表情序列长度是否和要求的长度一致，如果不一致，请继续生成，直到一致为止
 
 请直接返回JSON格式的表情序列，格式为：{{"expressions": ["索引1", "索引2", ...]}}
 """

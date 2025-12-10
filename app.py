@@ -31,7 +31,7 @@ def main():
         
         page = st.radio(
             "选择页面",
-            ["📤 上传音频", "🎭 Live2D预览", "ℹ️ 关于"],
+            ["📤 上传音频", "ℹ️ 关于"],
             key="navigation"
         )
         
@@ -59,9 +59,6 @@ def main():
     # 根据选择显示对应页面
     if page == "📤 上传音频":
         from frontend.pages.upload import render
-        render()
-    elif page == "🎭 Live2D预览":
-        from frontend.pages.preview import render
         render()
     elif page == "ℹ️ 关于":
         show_about_page()

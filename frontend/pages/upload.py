@@ -102,8 +102,7 @@ def _show_processing_options(uploaded_file):
     if st.session_state.get('processing_success'):
         st.markdown("---")
         if st.button("👀 查看预览", type="primary", use_container_width=True):
-            # 这里应该跳转到预览页面，但由于Streamlit页面结构，我们显示提示
-            st.info("💡 请使用侧边栏导航到 'Live2D预览' 页面查看结果")
+            st.info("💡 请使用打开plug/web/index.html查看Live2D预览 使用ctrl + 0 调用表情列表")
 
 def _process_file_with_real_api(uploaded_file, model_choice, time_resolution, enable_smoothing, sensitivity):
     """使用真实API处理文件"""
@@ -220,7 +219,11 @@ def _process_file_with_real_api(uploaded_file, model_choice, time_resolution, en
         for i, (emotion, score) in enumerate(emotion_scores.items()):
             with cols[i]:
                 st.metric(emotion.capitalize(), f"{score:.1%}")
-        
+        # 表情序列
+        st.markdown("#### 🎬 生成的表情序列")
+        expression_sequence = api_client.get_expression_sequence()
+        st.write("🎬 表情序列数据：")
+        st.json(expression_sequence)
         # 设置成功标志
         st.session_state['processing_success'] = True
         
@@ -235,7 +238,8 @@ def _process_file_with_real_api(uploaded_file, model_choice, time_resolution, en
             "audio_analysis": analyze_result['data'],
             "expression_generation": expression_data,
             "emotion_analysis": emotion_scores,
-            "status": "success"
+            "status": "success",
+            "expression_sequence": expression_sequence
         }
         
         st.markdown("#### 🔍 完整处理结果")
@@ -244,121 +248,6 @@ def _process_file_with_real_api(uploaded_file, model_choice, time_resolution, en
     except Exception as e:
         st.error(f"❌ 处理失败: {str(e)}")
         
-        # 如果是API连接错误，提供模拟数据
-        if "连接" in str(e) or "Connection" in str(e) or "requests" in str(e).lower():
-            st.warning("⚠️ 后端API连接失败，使用模拟数据演示功能")
-            _process_file_with_mock_data(uploaded_file, model_choice, time_resolution, enable_smoothing, sensitivity)
-        else:
-            # 错误信息也输出到控制台
-            error_info = {
-                "error_type": type(e).__name__,
-                "error_message": str(e),
-                "status": "failed"
-            }
-            st.json(error_info)
-            st.code(traceback.format_exc())
-
-def _process_file_with_mock_data(uploaded_file, model_choice, time_resolution, enable_smoothing, sensitivity):
-    """使用模拟数据处理文件（用于演示）"""
-    progress_placeholder = st.empty()
-    
-    try:
-        st.write("🔍 演示模式：使用模拟数据处理", uploaded_file.name)
-        
-        # 模拟处理过程
-        with progress_placeholder.container():
-            st.progress(0.2, text="📤 模拟文件上传...")
-            time.sleep(1)
-        
-        # 模拟音频分析
-        with progress_placeholder.container():
-            st.progress(0.4, text="🎵 模拟音频分析...")
-            audio_data = {
-                "duration": 2.34,
-                "tempo": 120.5,
-                "sample_rate": 44100,
-                "channels": 2,
-                "energy_stats": {"mean": 0.65, "max": 0.98, "min": 0.12},
-                "spectral_stats": {"mean": 0.72, "max": 0.95, "min": 0.18}
-            }
-            st.write("🎵 音频分析结果：")
-            st.json(audio_data)
-            time.sleep(1)
-        
-        # 模拟表情生成
-        with progress_placeholder.container():
-            st.progress(0.7, text="🎭 模拟表情生成...")
-            expression_data = {
-                "expression_id": "mock_" + str(int(time.time())),
-                "model_name": model_choice,
-                "keyframe_count": 23,
-                "time_resolution": time_resolution,
-                "smoothing_enabled": enable_smoothing,
-                "sensitivity": sensitivity
-            }
-            st.write("🎭 表情生成结果：")
-            st.json(expression_data)
-            time.sleep(1)
-        
-        with progress_placeholder.container():
-            st.progress(1.0, text="✅ 模拟处理完成!")
-        
-        # 保存模拟结果
-        st.session_state['last_file_name'] = uploaded_file.name
-        st.session_state['last_model'] = model_choice
-        st.session_state['last_time_resolution'] = time_resolution
-        st.session_state['last_smoothing'] = enable_smoothing
-        st.session_state['last_audio_data'] = audio_data
-        st.session_state['last_expression_data'] = expression_data
-        st.session_state['processing_success'] = True
-        
-        st.success("🎉 模拟处理完成！")
-        
-        # 显示统计信息
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("音频时长", f"{audio_data['duration']:.2f}秒")
-        with col2:
-            st.metric("关键帧数", str(expression_data['keyframe_count']))
-        with col3:
-            st.metric("节拍 (BPM)", f"{audio_data['tempo']:.1f}")
-        
-        # 模拟情感分数
-        emotion_scores = {
-            "happy": 0.6,
-            "energetic": 0.8,
-            "calm": 0.2,
-            "sad": 0.1
-        }
-        
-        st.markdown("#### 🎭 检测到的情感")
-        st.write("🎭 情感分析结果：")
-        st.json(emotion_scores)
-        
-        cols = st.columns(len(emotion_scores))
-        for i, (emotion, score) in enumerate(emotion_scores.items()):
-            with cols[i]:
-                st.metric(emotion.capitalize(), f"{score:.1%}")
-        
-        # 完整结果
-        complete_result = {
-            "mode": "simulation",
-            "file_info": {
-                "name": uploaded_file.name,
-                "size_mb": len(uploaded_file.getvalue()) / 1024 / 1024,
-                "type": uploaded_file.name.split('.')[-1].upper()
-            },
-            "audio_analysis": audio_data,
-            "expression_generation": expression_data,
-            "emotion_analysis": emotion_scores,
-            "status": "success"
-        }
-        
-        st.markdown("#### 🔍 完整处理结果（模拟）")
-        st.json(complete_result)
-        
-    except Exception as e:
-        st.error(f"❌ 模拟处理失败: {str(e)}")
 
 def _show_usage_tips():
     """显示使用提示"""
